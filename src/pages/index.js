@@ -1,118 +1,346 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
+import axios from "axios";
+import { useState, useEffect } from "react";
 
-const inter = Inter({ subsets: ["latin"] });
+
+
+function WeatherCard({ weatherData, city }) {
+  if (!weatherData || weatherData.length === 0) return <p>No data</p>;
+
+  return (
+    <div>
+      <h2>{city}</h2>
+      <p>{weatherData[0].cuaca}</p>
+      <p>Temperature: {weatherData[0].tempC}°C</p>
+      <p>Humidity: {weatherData[0].humidity}%</p>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
 
 export default function Home() {
+  const [areas, setAreas] = useState([])
+  const [weather, setWeather] = useState([])
+  const [yogyakartaWeather, setYogyakartaWeather] = useState([])
+  const [jakartaWeather, setJakartaWeather] = useState([])
+  const [bandungWeather, setBandungWeather] = useState([])
+  const [semarangWeather, setSemarangWeather] = useState([])
+  const [baliWeather, setBaliWeather] = useState([])
+  const [makassarWeather, setmakassarWeather] = useState([])
+  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date().getHours());
+  const [selectedCard, setSelectedCard] = useState(null);
+
+
+  function switchTheme() {
+    const nextTheme = isDarkMode ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    window.localStorage.setItem('theme', nextTheme);
+    setIsDarkMode(!isDarkMode);
+  }
+
+
+
+
+
+  const [selectedArea, setSelectedArea] = useState("")
+  const [selectedAreaName, setSelectedAreaName] = useState("")
+  const [search, setSearch] = useState("")
+
+//for all weather in indo
+  useEffect(() => {
+    if (selectedArea) {
+      axios.get(`https://ibnux.github.io/BMKG-importer/cuaca/${selectedArea}.json`)
+        .then((res) => {
+          console.log("Success getting data")
+          setWeather(res.data)
+          //setYogyakartaWeather(res.data)
+        })
+        .catch((err) => {
+          console.log("Error getting data")
+        })
+    }
+  }, [selectedArea])
+
+//darkmode
+
+
+useEffect(() => {
+  const timer = setInterval(() => {
+    setCurrentTime(new Date().getHours());
+  }, 3600000); // update evry houars?
+
+  // Clear interval on component unmount
+  return () => {
+    clearInterval(timer);
+  };
+}, []);
+
+useEffect(() => {
+  const theme = window.localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+}, []);
+
+//for search area
+useEffect(() => {
+  if (search) {
+    axios.get(`https://ibnux.github.io/BMKG-importer/cuaca/wilayah.json`)
+      .then((response) => {
+        const area = response.data.find(area => 
+          area.kota.toLowerCase().includes(search.toLowerCase()) || 
+          area.propinsi.toLowerCase().includes(search.toLowerCase())
+        )
+        if (area) {
+          setSelectedArea(area.id)
+          setSelectedAreaName(area.kota)
+        }
+      })
+      .catch((error) => {
+        console.log("error getting data!, fix it!")
+      })
+  }
+}, [search])
+
+  //for jogjakarta weather info
+  useEffect(() => {
+    axios.get("https://ibnux.github.io/BMKG-importer/cuaca/501190.json") //jogjakarta id
+      .then((res) => {
+        setYogyakartaWeather(res.data)
+      })
+      .catch((err) => {
+        console.log("Error getting data")
+      })
+  }, [])
+
+  //for jakarta weather info
+  useEffect(() => {
+    axios.get("https://ibnux.github.io/BMKG-importer/cuaca/501195.json") //jakarta id
+      .then((res) => {
+        setJakartaWeather(res.data)
+      })
+      .catch((err) => {
+        console.log("Error getting data")
+      })
+  }, [])
+
+
+  //for bandung weather info
+  useEffect(() => {
+    axios.get("https://ibnux.github.io/BMKG-importer/cuaca/501212.json") //bandung id
+      .then((res) => {
+        setBandungWeather(res.data)
+      })
+      .catch((err) => {
+        console.log("Error getting data")
+      })
+  }, [])
+
+
+  //for semarang weather info
+  useEffect(() => {
+    axios.get("https://ibnux.github.io/BMKG-importer/cuaca/501262.json") //semarang id
+      .then((res) => {
+        setSemarangWeather(res.data)
+      })
+      .catch((err) => {
+        console.log("Error getting data")
+      })
+  }, [])
+
+
+  //for bali weather info
+  useEffect(() => {
+    axios.get("https://ibnux.github.io/BMKG-importer/cuaca/501164.json") //bali id
+      .then((res) => {
+        setBaliWeather(res.data)
+      })
+      .catch((err) => {
+        console.log("Error getting data")
+      })
+  }, [])
+
+
+  //for makassar weather info
+  useEffect(() => {
+    axios.get("https://ibnux.github.io/BMKG-importer/cuaca/501495.json") //makassar id
+      .then((res) => {
+        setmakassarWeather(res.data)
+      })
+      .catch((err) => {
+        console.log("Error getting data")
+      })
+  }, [])
+
+
+  const handleSearch = () => {
+    const area = areas.find(area => area.kota.toLowerCase() === search.toLowerCase())
+    if (area) {
+      setSelectedArea(area.id)
+      setSelectedAreaName(area.kota)
+    }
+  }
+
+/*
+  const handleSearch = () => {
+    setSearch(search)
+  }
+*/  
+
+  //gettin current data and time (jogja only) (update every 6 hours)
+  const now = new Date ();
+
+  const recentWeather = yogyakartaWeather.filter((weather) => {
+    const weatherTime = new Date(weather.jamCuaca);
+    return now >= weatherTime;
+  });
+  const displayWeather = recentWeather[recentWeather.length - 1];
+
+  const cityIds = ['JakartaId', 'BandungId', 'SemarangId', 'BaliId', 'MakassarId']; //array of city ids
+
+
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+<main className="App flex flex-col items-center min-h-screen" style={{ backgroundColor: '#DCD7C9' }}>
+  <nav className= "navbar w-full p-4 flex justify-between items-center relative" style={{backgroundColor: 'var(--color-bg)', color: 'var(--color-text)'}}>
+    {/* Navbar code start */}
+    <div className="text-left text-sm">
+      <p className="text-white">
+        DI Yogyakarta <br />
+        {displayWeather && `${displayWeather.jamCuaca}`} <br />
+        {displayWeather && `${displayWeather.cuaca}`} <br />
+        {displayWeather && `${displayWeather.tempC}°C`}
+      </p>
+    </div>
+
+    <div className="absolute left-1/2 transform -translate-x-1/2 text-center text-white">
+      <h1 className="font-bold text-2xl">Ledz Weather</h1>
+      <p className="text-xs">Weather forecast for Indonesia from BMKG (Badan Meteorologi, Klimatologi, Geofisika)</p>
+      <p className="text-xs">The weather updates will change every 6 hours (00:00 - 06:00 - 12:00 - 18:00)</p>
+    </div>
+{/* seartch bar */}
+    <div className="ml-auto flex items-center">
+      <input 
+        type="text" 
+        placeholder="Search city..." 
+        className="text-sm text-black mr-2 px-2 py-1 rounded border border-white" 
+        value={search} 
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      <button onClick={handleSearch} className="text-sm bg-white text-blue-500 px-4 py-2 rounded hover:bg-blue-600 hover:text-white transition duration-200">Search</button>
+    </div>
+  </nav>
+
+  <label className="flex items-center cursor-pointer ml-4">
+    <div className="relative">
+      <input type="checkbox" className="hidden" checked={isDarkMode} onChange={switchTheme} />
+      <div className="toggle__line w-10 h-4 bg-gray-400 rounded-full shadow-inner"></div>
+      <div className="toggle__dot absolute w-6 h-6 bg-white rounded-full shadow inset-y-0 left-0"></div>
+    </div>
+    <div className="ml-3 text-gray-700 font-medium">
+      {isDarkMode ? 'Dark mode' : 'Light mode'}
+    </div>
+  </label>
+
+
+
+
+
+
+
+  {/* nvbar code end */}
+
+  {/* gif */}
+  {/* navbar code end */}
+
+
+
+  <div className="flex justify-around items-center h-full space-x-20 my-52 container" style={{ backgroundColor: '#DCD7C9' }}>
+    <div className={`bg-white p-4 rounded-lg shadow-lg transform transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-110 ${selectedCard === 'Jakarta' ? 'focus' : selectedCard ? 'blur' : ''}`} onMouseEnter={() => setSelectedCard('Jakarta')} onMouseLeave={() => setSelectedCard(null)}> 
+        <WeatherCard weatherData={jakartaWeather} city="Jakarta" />
+    </div>
+    <div className={`bg-white p-4 rounded-lg shadow-lg transform transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-110 ${selectedCard === 'Bandung' ? 'focus' : selectedCard ? 'blur' : ''}`} onMouseEnter={() => setSelectedCard('Bandung')} onMouseLeave={() => setSelectedCard(null)}>
+        <WeatherCard weatherData={bandungWeather} city="Bandung" />
+    </div>
+    <div className={`bg-white p-4 rounded-lg shadow-lg transform transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-110 ${selectedCard === 'Semarang' ? 'focus' : selectedCard ? 'blur' : ''}`} onMouseEnter={() => setSelectedCard('Semarang')} onMouseLeave={() => setSelectedCard(null)}>
+        <WeatherCard weatherData={semarangWeather} city="Semarang" />
+    </div>
+    <div className={`bg-white p-4 rounded-lg shadow-lg transform transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-110 ${selectedCard === 'Bali' ? 'focus' : selectedCard ? 'blur' : ''}`} onMouseEnter={() => setSelectedCard('Bali')} onMouseLeave={() => setSelectedCard(null)}>
+        <WeatherCard weatherData={baliWeather} city="Bali" />
+    </div>
+    <div className={`bg-white p-4 rounded-lg shadow-lg transform transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-110 ${selectedCard === 'Makassar' ? 'focus' : selectedCard ? 'blur' : ''}`} onMouseEnter={() => setSelectedCard('Makassar')} onMouseLeave={() => setSelectedCard(null)}>
+        <WeatherCard weatherData={makassarWeather} city="Makassar" />
+    </div>
+</div>
+
+
+
+
+{/*
+  <button onClick={()=>{
+    axios.get("https://ibnux.github.io/BMKG-importer/cuaca/wilayah.json")
+    .then((response)=>{
+      console.log ("success getting data")
+      setAreas(response.data.slice(0, 10))
+    })
+    .catch((error)=>{
+      console.log ("error getting data!, fix it!")
+    })
+  }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mt-4">
+    Get Wilayah
+  </button>
+*/}
+
+
+    <section className="mt-4">
+    {
+      areas.map((area) => {
+        return(
+          <div 
+            className="block hover:underline cursor-pointer text-black bg-gray-200 p-2 rounded mt-2" 
+            onClick={() => {
+              setSelectedArea(area.id);
+              setSelectedAreaName(area.kota); 
+            }}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+            {area.kota}, Id: {area.id}
+          </div>
+        )
+      })
+    }
+  {
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+    selectedAreaName && search &&
+  <h1 className="font-bold mt-4 text-blue-500">
+    {`Ini info cuaca untuk ${selectedAreaName}`}
+  </h1>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+  }  
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+    {
+      search && weather.map((weather) => {
+        return (
+          <div className="bg-white p-4 rounded shadow mt-2 border border-gray-200">
+            <p className="text-gray-700">{weather.jamCuaca} / {weather.cuaca} / {weather.tempC}°C</p>
+          </div>
+        )
+      })
+    }
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+    </section>
+
+  <footer className="mt-32 text-center text-gray-700 text-sm font-semibold p-3" style={{ backgroundColor: '#DCD7C9' }}>
+      This is the final project for Webdev 2 KMTETI
+  </footer>
+
     </main>
   );
 }
