@@ -3,10 +3,7 @@
 @tailwind utilities;
 
 
-:root {
-  --color-bg: #3b82f6; /* default background color */
-  --color-text: #ffffff; /* default text color */
-}
+
 
 [data-theme="dark"] {
   --color-bg: #020816; /* dark mode background color */
@@ -34,14 +31,7 @@
 
 
 
-body {
-  display: flex;
-  justify-content: center; /* align horizontal */
-  align-items: center; /* align vertical */
-  height: 100vh; /* full height of the viewport */
-  margin: 0; /* remove default margin */
-  padding: 0; /* remove default padding */
-}
+
 
 
 
